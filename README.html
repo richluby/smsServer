@@ -1,0 +1,193 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#sms-server">SMS Server</a><ul>
+<li><a href="#packets">Packets</a><ul>
+<li><a href="#options">Options</a></li>
+<li><a href="#adding-or-removing-a-client">Adding or Removing a Client</a></li>
+<li><a href="#adding-or-removing-a-phone-number">Adding or Removing a Phone Number</a></li>
+<li><a href="#sending-an-sms">Sending an SMS</a></li>
+<li><a href="#updating-the-clients">Updating the Clients</a></li>
+</ul></li>
+<li><a href="#encryption">Encryption</a></li>
+</ul></li>
+</ul>
+</div>
+<p><link rel="stylesheet" type="text/css" href="MD_styling.css" /></p>
+<h1 id="sms-server">SMS Server</h1>
+<p>This program provides a server that implements a key functionality for restaurant management: it notifies customers when the table is ready. The server receives phone numbers. Upon receiving a send packet, the server sends an SMS to the phone number listed.</p>
+<p>The data is encrypted over the network using a one-time password, and the numbers themselves are stored strictly in RAM to alleviate customer privacy concerns.</p>
+<h2 id="packets">Packets</h2>
+<h3 id="options">Options</h3>
+<table>
+<colgroup>
+<col width="7%" />
+<col width="7%" />
+<col width="37%" />
+<col width="7%" />
+<col width="40%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Bit</th>
+<th align="left">Val</th>
+<th align="left">Description</th>
+<th align="left">Val</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><p>0</p></td>
+<td align="left"><p>1</p></td>
+<td align="left"><p>Add a number to list</p></td>
+<td align="left"><p>0</p></td>
+<td align="left"><p>Do not add a number to list</p></td>
+</tr>
+<tr class="even">
+<td align="left"><p>1</p></td>
+<td align="left"><p>1</p></td>
+<td align="left"><p>Remove a number from list</p></td>
+<td align="left"><p>0</p></td>
+<td align="left"><p>Do not remove number from list</p></td>
+</tr>
+<tr class="odd">
+<td align="left"><p>2</p></td>
+<td align="left"><p>1</p></td>
+<td align="left"><p>Send an SMS to the number</p></td>
+<td align="left"><p>0</p></td>
+<td align="left"><p>Do not send an SMS</p></td>
+</tr>
+<tr class="even">
+<td align="left"><p>3</p></td>
+<td align="left"><p>1</p></td>
+<td align="left"><p>Place a phone call</p></td>
+<td align="left"><p>0</p></td>
+<td align="left"><p>Do not place a phone call</p></td>
+</tr>
+<tr class="odd">
+<td align="left"><p>4</p></td>
+<td align="left"><p>1</p></td>
+<td align="left"><p>Add a client</p></td>
+<td align="left"><p>0</p></td>
+<td align="left"><p>Do not add a client</p></td>
+</tr>
+<tr class="even">
+<td align="left"><p>5</p></td>
+<td align="left"><p>1</p></td>
+<td align="left"><p>Remove a client</p></td>
+<td align="left"><p>0</p></td>
+<td align="left"><p>Do not remove a client</p></td>
+</tr>
+<tr class="odd">
+<td align="left"><p>6</p></td>
+<td align="left"><p>1</p></td>
+<td align="left"><p>Developer specific</p></td>
+<td align="left"><p>0</p></td>
+<td align="left"><p>Developer Specific</p></td>
+</tr>
+<tr class="even">
+<td align="left"><p>7</p></td>
+<td align="left"><p>1</p></td>
+<td align="left"><p>Developer Specific</p></td>
+<td align="left"><p>0</p></td>
+<td align="left"><p>Developer specific</p></td>
+</tr>
+</tbody>
+</table>
+<p>Numbers that already exist will not be added a second time. Numbers that do not exist that are asked to be removed will not generate an error. Both cases will still generate an acknowledgement packet.</p>
+<p>Bits 6-7 are provided for the developer to use in an implementation-specific manner. Information for developer options may go after the last specified field in a packet.</p>
+<h4 id="client-management">Client Management</h4>
+<p>A client in this context is the interface to the restaurant employee. The client should implement the ability to add or remove phone numbers, and send SMS or voice command packets. It should also implement the ability to add or remove a server from its list.</p>
+<h3 id="adding-or-removing-a-client">Adding or Removing a Client</h3>
+<table>
+<colgroup>
+<col width="13%" />
+<col width="15%" />
+<col width="26%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">SEQ</th>
+<th align="left">Options</th>
+<th align="left">Client ID</th>
+<th align="left">Server Secret</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><p>2 bytes</p></td>
+<td align="left"><p>0000XX--</p></td>
+<td align="left"><p>4 bytes</p></td>
+<td align="left"><p>64 bytes</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>XX</strong> is the sequence to determine if this client is being added or removed. The ID will be interpreted as a whole number. The Secret will be a salted, one-time hash of a shared secret between the server and any authorized clients. Bits 0-3 must be 0 to signal that a client operation is occurring.</p>
+<h3 id="adding-or-removing-a-phone-number">Adding or Removing a Phone Number</h3>
+<table>
+<colgroup>
+<col width="13%" />
+<col width="13%" />
+<col width="26%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">SEQ</th>
+<th align="left">Options</th>
+<th align="left">Phone Number</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><p>2 bytes</p></td>
+<td align="left"><p>1 byte</p></td>
+<td align="left"><p>4 bytes</p></td>
+</tr>
+</tbody>
+</table>
+<p>Sequence numbers can be defined in an implementation specific manner. No requirement exists for them to be monotonic nor deterministic. However, if the same number is used in short succession, then a packet may not be confirmed.</p>
+<h3 id="sending-an-sms">Sending an SMS</h3>
+<table>
+<colgroup>
+<col width="13%" />
+<col width="13%" />
+<col width="26%" />
+<col width="29%" />
+<col width="15%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">SEQ</th>
+<th align="left">Options</th>
+<th align="left">Phone Number</th>
+<th align="left">Number in Greeting</th>
+<th align="left">Greeting</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><p>2 bytes</p></td>
+<td align="left"><p>1 byte</p></td>
+<td align="left"><p>4 bytes</p></td>
+<td align="left"><p>2 bytes</p></td>
+<td align="left"><p>64 bytes</p></td>
+</tr>
+</tbody>
+</table>
+<h3 id="updating-the-clients">Updating the Clients</h3>
+<p>The server updates the clients (maitre d') after each number is received. While this is fine for a few numbers, it will start to overload a network given many numbers that are constantly being updated.</p>
+<h2 id="encryption">Encryption</h2>
+<p>The entire packet is to be encrypted using a one-time password scheme.</p>
+</body>
+</html>
