@@ -130,6 +130,34 @@ class Options(object):
 	def bits(self, val):
 		self._bits = val
 
+# base class of the packets. This class handles the options and sequences
+class Packet(object):
+	# initializes the class
+	def __init__(self):
+		self.options = Options()
+		self.seqNum = 0
+
+# builds the class to handle client add or remove
+class ClientPacket(Packet):
+	# initializes the class
+	def __init__(self):
+		self.clientID = 1
+		self.serverSecret = 0
+
+# builds the class to handle adding or removing phone numbers
+class NumberPacket(Packet):
+	# initializes the packet
+	def __init__(self):
+		self.number = 0
+
+# builds the class to handle sending a notification to a customer
+def NotifyPacket(Packet):
+	# initializes the packet
+	def __init__(self):
+		self.number = 0
+		self.greetNumber = 1
+		self.greeting = "Hello."
+
 if __name__ == "__main__":
 	opt = Options()
 	opt.addNumber = 1
