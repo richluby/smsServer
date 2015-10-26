@@ -16,7 +16,6 @@
 <li><a href="#adding-or-removing-a-client">Adding or Removing a Client</a></li>
 <li><a href="#adding-or-removing-a-phone-number">Adding or Removing a Phone Number</a></li>
 <li><a href="#sending-an-sms">Sending an SMS</a></li>
-<li><a href="#updating-the-clients">Updating the Clients</a></li>
 </ul></li>
 <li><a href="#encryption">Encryption</a></li>
 </ul></li>
@@ -156,7 +155,7 @@
 </tr>
 </tbody>
 </table>
-<p>Sequence numbers can be defined in an implementation specific manner. No requirement exists for them to be monotonic nor deterministic. However, if the same number is used in short succession, then a packet may not be confirmed.</p>
+<p>Sequence numbers can be defined in an implementation specific manner. No requirement exists for them to be monotonic nor deterministic. However, if the same number is used in short succession, then a packet may not be confirmed. When the server receives this packet, it will update each client using the same packet, albeit with a different sequence number.</p>
 <h3 id="sending-an-sms">Sending an SMS</h3>
 <table>
 <colgroup>
@@ -185,8 +184,6 @@
 </tr>
 </tbody>
 </table>
-<h3 id="updating-the-clients">Updating the Clients</h3>
-<p>The server updates the clients (maitre d') after each number is received. While this is fine for a few numbers, it will start to overload a network given many numbers that are constantly being updated.</p>
 <h2 id="encryption">Encryption</h2>
 <p>The entire packet is to be encrypted using a one-time password scheme.</p>
 </body>

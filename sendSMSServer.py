@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 import sys, getopt, SocketServer
-from ThreadingUDPServer import ThreadingUDPHandler, ThreadingUDPServer
-from Packet import *
+from objects import ThreadingUDPHandler, ThreadingUDPServer
+from objects import Packet
 
 #the configuration dictionary
 _CONF_DICT = {}

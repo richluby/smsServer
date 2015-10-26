@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import struct
+
 #contains the mapping of options to bit placement
 _BITMAP = {"addNumber":0, "removeNumber":1, "sendSMS": 2, "sendVoiceCall":3, "addClient":4, "removeClient":5, "option1":6, "option2":7}
 
@@ -135,7 +137,20 @@ class Packet(object):
 	# initializes the class
 	def __init__(self):
 		self.options = Options()
+		self.payload = 0
 		self.seqNum = 0
+	
+	# packs the packet into a representation of bytes using struct.pack()
+	@property
+	def toBytes(self):
+	# ! says to use Network-byte order
+	# H says to use unsigned short
+	# B says use unsigned char
+		return struct.pack("!HB", self.seqNum, self.options.bits)
+	
+	def fromBytes(self, bits):
+	# unpacks a packet from the given bits
+		pass
 
 # builds the class to handle client add or remove
 class ClientPacket(Packet):
@@ -160,13 +175,14 @@ def NotifyPacket(Packet):
 
 if __name__ == "__main__":
 	opt = Options()
-	opt.addNumber = 1
-	opt.removeNumber = 1
-	opt.sendSMS = 1
+	opt.addNumber = 0
+	opt.removeNumber = 0
+	opt.sendSMS = 0
 	opt.sendVoiceCall = 0
 	opt.addClient = 1
 	opt.removeClient = 0
 	opt.option1 = 1
 	opt.option2 = 9
-	print "Options:", opt.bits
-	print "Option1:", opt.option1
+	packet = Packet()
+	packet.options = opt
+	print "%s" % packet.toBytes
