@@ -10,6 +10,106 @@ class TestPacketModule(unittest.TestCase):
 		self.options = Options()
 		self.options.bits = 0b00001111
 
+class TestPacketClass(TestPacketModule):
+# test the Packet class
+	def setUp(self):
+	# sets up a known configuration
+		self.packet = Packet()
+		self.packet.options = Options()
+		self.packet.payload = 0
+		self.packet.seqNum = 0
+
+	def test_packingBytes(self):
+	#tests to verify that the payload packing and unpacking methods operate correctly
+		self.packet.seqNum = 1
+		self.packet.options.bits = 0b00001111
+		packed = self.packet.packedBytes
+		self.assertEqual(packed, '\x00\x01\x0f')
+	
+	def test_unpackingBytes(self):
+	#test verifies that bytes are correctly unpacked
+		unpacked = '\x00\x01\x0f'
+		self.packet.unpackBytes(unpacked)
+		self.assertEqual(self.packet.options.bits, 0b00001111)
+		self.assertEqual(self.packet.seqNum, 1)
+	
+	def testDecryptPacket(self):
+	# tests decrypting a packet with zeroed options
+		pass
+
+class TestClientPacketClass(TestPacketModule):
+# test the client packet class
+	def setUp(self):
+		self.packet = ClientPacket()
+
+	def test_packingBytes(self):
+	# test packing the bytes
+		self.packet.seqNum = 1
+		self.packet.options.bits = 0b00001111
+		self.packet.clientID = 1
+		self.packet.serverSecret = "\xff"
+		packed = self.packet.packedBytes
+		self.assertEqual(packed, '\x00\x01\x0f\x00\x00\x00\x01\xff')
+
+	def testUnpackingBytes(self):
+	#tests unpacking the bytes
+		packed = '\x00\x01\x0f\x00\x00\x00\x01\xfd\xfa'
+		self.packet.unpackBytes(packed)
+		self.assertEqual(self.packet.seqNum, 1)
+		self.assertEqual(self.packet.options.bits, 0b00001111)
+		self.assertEqual(self.packet.clientID, 1)
+		self.assertEqual(self.packet.serverSecret, "\xfd\xfa")
+
+class TestNumberPacketClass(TestPacketModule):
+# test the Packet class
+	def setUp(self):
+	# sets up a known configuration
+		self.packet = NumberPacket()
+		self.packet.seqNum = 0
+
+	def test_packingBytes(self):
+	#tests to verify that the payload packing and unpacking methods operate correctly
+		self.packet.seqNum = 1
+		self.packet.options.bits = 0b00001111
+		self.packet.number = 16
+		packed = self.packet.packedBytes
+		self.assertEqual(packed, '\x00\x01\x0f\x00\x00\x00\x10')
+	
+	def test_unpackingBytes(self):
+	#test verifies that bytes are correctly unpacked
+		unpacked = '\x00\x01\x0f\x00\x00\x00\x10'
+		self.packet.unpackBytes(unpacked)
+		self.assertEqual(self.packet.options.bits, 0b00001111)
+		self.assertEqual(self.packet.seqNum, 1)
+		self.assertEqual(self.packet.number, 16)
+
+class TestNotifyPacketClass(TestPacketModule):
+# test the Packet class
+	def setUp(self):
+	# sets up a known configuration
+		self.packet = NotifyPacket()
+		self.packet.seqNum = 0
+
+	def test_packingBytes(self):
+	#tests to verify that the payload packing and unpacking methods operate correctly
+		self.packet.seqNum = 1
+		self.packet.options.bits = 0b00001111
+		self.packet.number = 16
+		self.packet.greetNumber = 2
+		self.packet.greeting = "Hello World"
+		packed = self.packet.packedBytes
+		self.assertEqual(packed, '\x00\x01'+ '\x0f'+'\x00\x00\x00\x10'+'\x00\x02'+'Hello World')
+	
+	def test_unpackingBytes(self):
+	#test verifies that bytes are correctly unpacked
+		unpacked = '\x00\x01'+ '\x0f'+'\x00\x00\x00\x10'+'\x00\x02'+'Hello World'
+		self.packet.unpackBytes(unpacked)
+		self.assertEqual(self.packet.options.bits, 0b00001111)
+		self.assertEqual(self.packet.seqNum, 1)
+		self.assertEqual(self.packet.number, 16)
+		self.assertEqual(self.packet.greetNumber, 2)
+		self.assertEqual(self.packet.greeting, "Hello World")
+
 class TestOptionsClass(TestPacketModule):
 # tests the Options class for correctness
 	def test_returnValueAddNumber(self):

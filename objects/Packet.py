@@ -134,6 +134,18 @@ class Options(object):
 
 # base class of the packets. This class handles the options and sequences
 class Packet(object):
+# handles packet operations
+	# variable used to determine packing sequence
+	# ! says to use Network-byte order
+	# H says to use unsigned short
+	# B says use unsigned char
+	PACK_SEQUENCE = "!HB"
+
+	# the length of the sequence number
+	LEN_SEQ_NUM = 2
+	#the length of the options field
+	LEN_OPT_FIELD = 1
+
 	# initializes the class
 	def __init__(self):
 		self.options = Options()
@@ -142,36 +154,111 @@ class Packet(object):
 	
 	# packs the packet into a representation of bytes using struct.pack()
 	@property
-	def toBytes(self):
-	# ! says to use Network-byte order
-	# H says to use unsigned short
-	# B says use unsigned char
-		return struct.pack("!HB", self.seqNum, self.options.bits)
+	def packedBytes(self):
+	# packs the bytes using the sequence packing scheme
+		return struct.pack(Packet.PACK_SEQUENCE, self.seqNum, self.options.bits)
 	
-	def fromBytes(self, bits):
+	def unpackBytes(self, bits):
 	# unpacks a packet from the given bits
+		self.seqNum, self.options.bits = struct.unpack(Packet.PACK_SEQUENCE, bits)
+	
+	@staticmethod
+	def decryptPacket(encrData):
+	# decrypts a packet given the encrypted payload
+	# return:	returns a defined packet (with the appropriate child class)
+	#			with its values set to the decrypted results
 		pass
 
 # builds the class to handle client add or remove
 class ClientPacket(Packet):
+# manages a packet for adding/removing clients
+	# I says to use unsigned integer
+	# 8Q says to use 8 unsigned long longs
+	PACK_SEQUENCE = "".join([Packet.PACK_SEQUENCE, "I"])
+	LEN_CLIENT_ID = 4
+	#the offset of the secret from beginning of the byte sequence
+	SECRET_OFFSET = Packet.LEN_SEQ_NUM + Packet.LEN_OPT_FIELD + LEN_CLIENT_ID
+
 	# initializes the class
 	def __init__(self):
-		self.clientID = 1
-		self.serverSecret = 0
+		super(ClientPacket, self).__init__()
+		self.clientID = 0
+		self.serverSecret = "\xff"
+
+	# packs the packet into a representation of bytes using struct.pack()
+	@property
+	def packedBytes(self):
+	# returns the packed sequence of bytes according to the add/remove
+	# client packet in the specification
+		return struct.pack(ClientPacket.PACK_SEQUENCE, 
+			self.seqNum, 
+			self.options.bits, 
+			self.clientID) + (bytes(self.serverSecret))
+	
+	def unpackBytes(self, bits):
+	# unpacks a packet from the given bits
+	# expects the bits to be packed in the same manner
+		self.seqNum, self.options.bits, self.clientID = struct.unpack(ClientPacket.PACK_SEQUENCE, bits[:ClientPacket.SECRET_OFFSET])
+		self.serverSecret = bits[ClientPacket.SECRET_OFFSET:]
 
 # builds the class to handle adding or removing phone numbers
 class NumberPacket(Packet):
+# manages a number packet
+	# the packing sequence
+	# I says to use unsigned integer
+	PACK_SEQUENCE = "".join([Packet.PACK_SEQUENCE, "I"])
+
 	# initializes the packet
 	def __init__(self):
+		super(NumberPacket, self).__init__()
 		self.number = 0
+	
+	@property
+	def packedBytes(self):
+	# returns the packed sequence of bytes according to the add/remove
+	# number packet in the specification
+		return struct.pack(NumberPacket.PACK_SEQUENCE, 
+			self.seqNum, 
+			self.options.bits, 
+			self.number)
+	
+	def unpackBytes(self, bits):
+	# unpacks the packet from the given bits
+		self.seqNum, self.options.bits, self.number = struct.unpack(NumberPacket.PACK_SEQUENCE, bits)
 
 # builds the class to handle sending a notification to a customer
-def NotifyPacket(Packet):
+class NotifyPacket(Packet):
+# manages an SMS send packet
+	# the packing sequence to use
+	PACK_SEQUENCE = "".join([Packet.PACK_SEQUENCE, "IH"])
+
+	# the length in bytes of the phone number
+	LEN_PHONE_NUMBER = 4
+	# length in bytes of the number in this greeting
+	LEN_GREETING_NUMBER = 2
+	# offset at which the greeting starts
+	OFFSET_GREETING = Packet.LEN_SEQ_NUM + Packet.LEN_OPT_FIELD + LEN_PHONE_NUMBER + LEN_GREETING_NUMBER
 	# initializes the packet
 	def __init__(self):
+		super(NotifyPacket, self).__init__()
 		self.number = 0
 		self.greetNumber = 1
 		self.greeting = "Hello."
+
+	@property
+	def packedBytes(self):
+	# returns the packed sequence of bytes according to the add/remove
+	# number packet in the specification
+		return struct.pack(NotifyPacket.PACK_SEQUENCE, 
+			self.seqNum, 
+			self.options.bits, 
+			self.number,
+			self.greetNumber) + bytes(self.greeting)
+	
+	def unpackBytes(self, bits):
+	# unpacks the packet from the given bits
+		self.seqNum, self.options.bits, self.number, self.greetNumber = struct.unpack(NotifyPacket.PACK_SEQUENCE, bits[:NotifyPacket.OFFSET_GREETING])
+		self.greeting = str(bits[NotifyPacket.OFFSET_GREETING:])
 
 if __name__ == "__main__":
 	opt = Options()
