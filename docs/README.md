@@ -46,7 +46,7 @@ A client in this context is the interface to the restaurant employee. The client
 | 2 bytes | 0000XX-- | 4 bytes          | 64 bytes      |
 +---------+----------+------------------+---------------+
 
-**XX** is the sequence to determine if this client is being added or removed. The ID will be interpreted as a whole number. The Secret will be a salted, one-time hash of a shared secret between the server and any authorized clients. Bits 0-3 must be 0 to signal that a client operation is occurring.
+**XX** is the sequence to determine if this client is being added or removed. The ID will be interpreted as a whole number. The Secret will be a salted, one-time hash of a shared secret between the server and any authorized clients. The packet itself must be encrypted in the same scheme as any other packet. Bits 0-3 must be 0 to signal that a client operation is occurring.
 
 ### Adding or Removing a Phone Number
 
@@ -66,6 +66,16 @@ Sequence numbers can be defined in an implementation specific manner. No require
 | 2 bytes | 1 byte  | 4 bytes          | 2 bytes            | 64 bytes |
 +---------+---------+------------------+--------------------+----------+
 
+This packet commands the server to send an SMS to the specified number. The greeting 
+provides a customization item (such as a name) for the specified number, as well as a number. The server has a standard greeting into which it places the two items. 
+
+The packet has been designed such that the server can operate statelessly: unless add or remove is specified, the number will not be added or removed. However, the message will still go to the supplied number.
+
 ## Encryption
 
-The entire packet is to be encrypted using a one-time password scheme. 
+The entire packet is to be encrypted using a time based, one-time password scheme as defined by RFC __________________________________________.
+
+### Encrypted Packet
+
++---------+
+|
