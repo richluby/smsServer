@@ -18,6 +18,11 @@ class TestPacketClass(TestPacketModule):
 		self.packet.options = Options()
 		self.packet.payload = 0
 		self.packet.seqNum = 0
+	
+	def test_representation(self):
+	# tests the string return of the packet
+		string = str(self.packet)
+		self.assertEqual(string, "00:0")
 
 	def test_packingBytes(self):
 	#tests to verify that the payload packing and unpacking methods operate correctly
@@ -51,6 +56,11 @@ class TestClientPacketClass(TestPacketModule):
 		packed = self.packet.packedBytes
 		self.assertEqual(packed, '\x00\x01\x0f\x00\x00\x00\x01\xff')
 
+	def test_representation(self):
+	# tests the string return of the packet
+		string = str(self.packet)
+		self.assertEqual(string, "00:0:0000:\xff")
+
 	def testUnpackingBytes(self):
 	#tests unpacking the bytes
 		packed = '\x00\x01\x0f\x00\x00\x00\x01\xfd\xfa'
@@ -66,6 +76,11 @@ class TestNumberPacketClass(TestPacketModule):
 	# sets up a known configuration
 		self.packet = NumberPacket()
 		self.packet.seqNum = 0
+
+	def test_representation(self):
+	# tests the string return of the packet
+		string = str(self.packet)
+		self.assertEqual(string, "00:0:0000")
 
 	def test_packingBytes(self):
 	#tests to verify that the payload packing and unpacking methods operate correctly
@@ -89,6 +104,11 @@ class TestNotifyPacketClass(TestPacketModule):
 	# sets up a known configuration
 		self.packet = NotifyPacket()
 		self.packet.seqNum = 0
+
+	def test_representation(self):
+	# tests the string return of the packet
+		string = str(self.packet)
+		self.assertEqual(string, "00:0:0000:01:Hello.")
 
 	def test_packingBytes(self):
 	#tests to verify that the payload packing and unpacking methods operate correctly

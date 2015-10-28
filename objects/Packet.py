@@ -149,7 +149,6 @@ class Packet(object):
 	# initializes the class
 	def __init__(self):
 		self.options = Options()
-		self.payload = 0
 		self.seqNum = 0
 	
 	# packs the packet into a representation of bytes using struct.pack()
@@ -162,6 +161,10 @@ class Packet(object):
 	# unpacks a packet from the given bits
 		self.seqNum, self.options.bits = struct.unpack(Packet.PACK_SEQUENCE, bits)
 	
+	def __repr__(self):
+	# returns a string representation of this object
+		return "{:02x}:{:1x}".format(self.seqNum, self.options.bits)
+
 	@staticmethod
 	def decryptPacket(encrData):
 	# decrypts a packet given the encrypted payload
@@ -184,6 +187,10 @@ class ClientPacket(Packet):
 		super(ClientPacket, self).__init__()
 		self.clientID = 0
 		self.serverSecret = "\xff"
+
+	def __repr__(self):
+	# returns a string representation of this object
+		return "{:02x}:{:1x}:{:0>4x}:{:}".format(self.seqNum, self.options.bits, self.clientID, self.serverSecret)
 
 	# packs the packet into a representation of bytes using struct.pack()
 	@property
@@ -213,6 +220,10 @@ class NumberPacket(Packet):
 		super(NumberPacket, self).__init__()
 		self.number = 0
 	
+	def __repr__(self):
+	# returns a string representation of this object
+		return "{:02x}:{:1x}:{:0>4x}".format(self.seqNum, self.options.bits, self.number)
+
 	@property
 	def packedBytes(self):
 	# returns the packed sequence of bytes according to the add/remove
@@ -244,6 +255,10 @@ class NotifyPacket(Packet):
 		self.number = 0
 		self.greetNumber = 1
 		self.greeting = "Hello."
+
+	def __repr__(self):
+	# returns a string representation of this object
+		return "{:02x}:{:1x}:{:0>4x}:{:0>2d}:{}".format(self.seqNum, self.options.bits, self.number, self.greetNumber, self.greeting)
 
 	@property
 	def packedBytes(self):
