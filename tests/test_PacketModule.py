@@ -83,21 +83,29 @@ class TestClientPacketClass(TestPacketModule):
 		self.packet.clientID = 1
 		self.packet.serverSecret = "\xff"
 		packed = self.packet.packedBytes
-		self.assertEqual(packed, '\x00\x01\x0f\x00\x00\x00\x01\xff')
+		self.assertEqual(packed, '\x00\x01'+'\x0f'+'\x00\x00\x00\x01'+'\x00\x11'+'\xff')
 
 	def test_representation(self):
 	# tests the string return of the packet
 		string = str(self.packet)
 		self.assertEqual(string, "00:0:0000:\x00")
 
-	def testUnpackingBytes(self):
+	def test_unpackingBytes(self):
 	#tests unpacking the bytes
-		packed = '\x00\x01\x0f\x00\x00\x00\x01\xfd\xfa'
+		packed = '\x00\x01'+'\x0f'+'\x00\x00\x00\x01'+'\x00\x11'+'\xfd\xfa'
 		self.packet.unpackBytes(packed)
 		self.assertEqual(self.packet.seqNum, 1)
 		self.assertEqual(self.packet.options.bits, 0b00001111)
 		self.assertEqual(self.packet.clientID, 1)
+		self.assertEqual(self.packet.checksum, 17)
 		self.assertEqual(self.packet.serverSecret, "\xfd\xfa")
+	
+	def test_checksum(self):
+	# verifies the checksum algorithm
+		self.packet.seqNum = 1
+		self.packet.clientID = 2
+		self.packet.options.bits = 1
+		self.assertEqual(self.packet.checksum, 4)
 
 class TestNumberPacketClass(TestPacketModule):
 # test the Packet class
@@ -117,15 +125,16 @@ class TestNumberPacketClass(TestPacketModule):
 		self.packet.options.bits = 0b00001111
 		self.packet.number = 16
 		packed = self.packet.packedBytes
-		self.assertEqual(packed, '\x00\x01\x0f\x00\x00\x00\x10')
+		self.assertEqual(packed, '\x00\x01\x0f\x00\x00\x00\x10'+'\x00\x20')
 	
 	def test_unpackingBytes(self):
 	#test verifies that bytes are correctly unpacked
-		unpacked = '\x00\x01\x0f\x00\x00\x00\x10'
+		unpacked = '\x00\x01\x0f\x00\x00\x00\x10'+'\x00\x20'
 		self.packet.unpackBytes(unpacked)
 		self.assertEqual(self.packet.options.bits, 0b00001111)
 		self.assertEqual(self.packet.seqNum, 1)
 		self.assertEqual(self.packet.number, 16)
+		self.assertEqual(self.packet.checksum, 32)
 
 class TestNotifyPacketClass(TestPacketModule):
 # test the Packet class
@@ -147,16 +156,17 @@ class TestNotifyPacketClass(TestPacketModule):
 		self.packet.greetNumber = 2
 		self.packet.greeting = "Hello World"
 		packed = self.packet.packedBytes
-		self.assertEqual(packed, '\x00\x01'+ '\x0f'+'\x00\x00\x00\x10'+'\x00\x02'+'Hello World')
+		self.assertEqual(packed, '\x00\x01'+ '\x0f'+'\x00\x00\x00\x10'+'\x00\x02'+'\x00\x22'+'Hello World')
 	
 	def test_unpackingBytes(self):
 	#test verifies that bytes are correctly unpacked
-		unpacked = '\x00\x01'+ '\x0f'+'\x00\x00\x00\x10'+'\x00\x02'+'Hello World'
+		unpacked = '\x00\x01'+ '\x0f'+'\x00\x00\x00\x10'+'\x00\x02'+'\x00\x22'+'Hello World'
 		self.packet.unpackBytes(unpacked)
 		self.assertEqual(self.packet.options.bits, 0b00001111)
 		self.assertEqual(self.packet.seqNum, 1)
 		self.assertEqual(self.packet.number, 16)
 		self.assertEqual(self.packet.greetNumber, 2)
+		self.assertEqual(self.packet.checksum, 34)
 		self.assertEqual(self.packet.greeting, "Hello World")
 
 class TestOptionsClass(TestPacketModule):

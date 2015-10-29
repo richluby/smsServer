@@ -143,12 +143,19 @@ class Packet(object):
 	# ! says to use Network-byte order
 	# H says to use unsigned short
 	# B says use unsigned char
+	# note that the checksum is not packed. child classes must pack it
 	PACK_SEQUENCE = "!HB"
-
+	LEN_CLIENT_ID = 4
 	# the length of the sequence number
 	LEN_SEQ_NUM = 2
 	#the length of the options field
 	LEN_OPT_FIELD = 1
+	# the length in bytes of the phone number
+	LEN_PHONE_NUMBER = 4
+	#length of the checksum
+	LEN_CHECKSUM = 2
+	# length in bytes of the number in this greeting
+	LEN_GREETING_NUMBER = 2
 
 	# initializes the class
 	def __init__(self):
@@ -165,6 +172,11 @@ class Packet(object):
 	# unpacks a packet from the given bits
 		self.seqNum, self.options.bits = struct.unpack(Packet.PACK_SEQUENCE, bits)
 	
+	@property
+	def checksum(self):
+	# calculates and returns the checksum
+		return (self.seqNum + self.options.bits) & 0xFFFF
+
 	def __repr__(self):
 	# returns a string representation of this object
 		return "{:02x}:{:1x}".format(self.seqNum, self.options.bits)
@@ -199,11 +211,10 @@ class Packet(object):
 class ClientPacket(Packet):
 # manages a packet for adding/removing clients
 	# I says to use unsigned integer
-	# 8Q says to use 8 unsigned long longs
-	PACK_SEQUENCE = "".join([Packet.PACK_SEQUENCE, "I"])
-	LEN_CLIENT_ID = 4
+	# H says to use unsigned short
+	PACK_SEQUENCE = "".join([Packet.PACK_SEQUENCE, "IH"])
 	#the offset of the secret from beginning of the byte sequence
-	SECRET_OFFSET = Packet.LEN_SEQ_NUM + Packet.LEN_OPT_FIELD + LEN_CLIENT_ID
+	SECRET_OFFSET = Packet.LEN_SEQ_NUM + Packet.LEN_OPT_FIELD + Packet.LEN_CLIENT_ID + Packet.LEN_CHECKSUM
 
 	# initializes the class
 	def __init__(self):
@@ -223,20 +234,29 @@ class ClientPacket(Packet):
 		return struct.pack(ClientPacket.PACK_SEQUENCE, 
 			self.seqNum, 
 			self.options.bits, 
-			self.clientID) + (bytes(self.serverSecret))
+			self.clientID,
+			self.checksum) + (bytes(self.serverSecret))
+
+	@property
+	def checksum(self):
+	# calculates and returns the checksum
+		return (self.seqNum + self.options.bits + self.clientID) & 0xFFFF
 	
 	def unpackBytes(self, bits):
 	# unpacks a packet from the given bits
 	# expects the bits to be packed in the same manner
-		self.seqNum, self.options.bits, self.clientID = struct.unpack(ClientPacket.PACK_SEQUENCE, bits[:ClientPacket.SECRET_OFFSET])
+		self.seqNum, self.options.bits, self.clientID, checksum = struct.unpack(ClientPacket.PACK_SEQUENCE, bits[:ClientPacket.SECRET_OFFSET])
 		self.serverSecret = bits[ClientPacket.SECRET_OFFSET:]
+		if (checksum != self.checksum):
+			raise ValueError("INVALID CHECKSUM")
 
 # builds the class to handle adding or removing phone numbers
 class NumberPacket(Packet):
 # manages a number packet
 	# the packing sequence
 	# I says to use unsigned integer
-	PACK_SEQUENCE = "".join([Packet.PACK_SEQUENCE, "I"])
+	# H says to use unsigned short
+	PACK_SEQUENCE = "".join([Packet.PACK_SEQUENCE, "IH"])
 
 	# initializes the packet
 	def __init__(self):
@@ -248,30 +268,35 @@ class NumberPacket(Packet):
 		return "{:02x}:{:01x}:{:0>4x}".format(self.seqNum, self.options.bits, self.number)
 
 	@property
+	def checksum(self):
+	# calculates and returns the checksum
+		return (self.seqNum + self.options.bits + self.number) & 0xFFFF
+
+	@property
 	def packedBytes(self):
 	# returns the packed sequence of bytes according to the add/remove
 	# number packet in the specification
 		return struct.pack(NumberPacket.PACK_SEQUENCE, 
 			self.seqNum, 
 			self.options.bits, 
-			self.number)
+			self.number,
+			self.checksum)
 	
 	def unpackBytes(self, bits):
 	# unpacks the packet from the given bits
-		self.seqNum, self.options.bits, self.number = struct.unpack(NumberPacket.PACK_SEQUENCE, bits)
+		self.seqNum, self.options.bits, self.number, checksum = struct.unpack(NumberPacket.PACK_SEQUENCE, bits)
+		if (checksum != self.checksum):
+			raise ValueError("INVALID CHECKSUM")
 
 # builds the class to handle sending a notification to a customer
 class NotifyPacket(Packet):
 # manages an SMS send packet
 	# the packing sequence to use
-	PACK_SEQUENCE = "".join([Packet.PACK_SEQUENCE, "IH"])
-
-	# the length in bytes of the phone number
-	LEN_PHONE_NUMBER = 4
-	# length in bytes of the number in this greeting
-	LEN_GREETING_NUMBER = 2
+	# H says to use unsigned short
+	PACK_SEQUENCE = "".join([Packet.PACK_SEQUENCE, "IHH"])
 	# offset at which the greeting starts
-	OFFSET_GREETING = Packet.LEN_SEQ_NUM + Packet.LEN_OPT_FIELD + LEN_PHONE_NUMBER + LEN_GREETING_NUMBER
+	OFFSET_GREETING = Packet.LEN_SEQ_NUM + Packet.LEN_OPT_FIELD + Packet.LEN_PHONE_NUMBER + Packet.LEN_GREETING_NUMBER + Packet.LEN_CHECKSUM
+
 	# initializes the packet
 	def __init__(self):
 		super(NotifyPacket, self).__init__()
@@ -284,6 +309,11 @@ class NotifyPacket(Packet):
 		return "{:02x}:{:1x}:{:0>4x}:{:0>2d}:{}".format(self.seqNum, self.options.bits, self.number, self.greetNumber, self.greeting)
 
 	@property
+	def checksum(self):
+	# calculates and returns the checksum
+		return (self.seqNum + self.options.bits + self.number + self.greetNumber) & 0xFFFF
+
+	@property
 	def packedBytes(self):
 	# returns the packed sequence of bytes according to the add/remove
 	# number packet in the specification
@@ -291,12 +321,15 @@ class NotifyPacket(Packet):
 			self.seqNum, 
 			self.options.bits, 
 			self.number,
-			self.greetNumber) + bytes(self.greeting)
+			self.greetNumber,
+			self.checksum) + bytes(self.greeting)
 	
 	def unpackBytes(self, bits):
 	# unpacks the packet from the given bits
-		self.seqNum, self.options.bits, self.number, self.greetNumber = struct.unpack(NotifyPacket.PACK_SEQUENCE, bits[:NotifyPacket.OFFSET_GREETING])
+		self.seqNum, self.options.bits, self.number, self.greetNumber, checksum = struct.unpack(NotifyPacket.PACK_SEQUENCE, bits[:NotifyPacket.OFFSET_GREETING])
 		self.greeting = str(bits[NotifyPacket.OFFSET_GREETING:])
+		if (checksum != self.checksum):
+			raise ValueError("INVALID CHECKSUM")
 
 if __name__ == "__main__":
 	opt = Options()

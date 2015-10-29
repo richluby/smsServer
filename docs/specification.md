@@ -60,7 +60,7 @@ The checksum is calculated by adding the base-10 integer value of the sequence n
 
 Sequence numbers can be defined in an implementation specific manner. No requirement exists for them to be monotonic nor deterministic. However, if the same number is used in short succession, then a packet may not be confirmed. When the server receives this packet, it will update each client using the same packet, albeit with a different sequence number.
 
-The checksum is calculated by adding the base-10 integer value of the sequence number, the options field, the client ID, and the phone number. The least significant two bytes of the sum are kept. 
+The checksum is calculated by adding the base-10 integer value of the sequence number, the options field, and the phone number. The least significant two bytes of the sum are kept. 
 
 ### Sending an SMS
 
@@ -73,7 +73,7 @@ The checksum is calculated by adding the base-10 integer value of the sequence n
 This packet commands the server to send an SMS to the specified number. The greeting 
 provides a customization item (such as a name) for the specified number, as well as a number. The greeting does not have to fill the full 64 bytes. The server has a standard greeting into which it places the two items. 
 
-The checksum is calculated by adding the base-10 integer value of the sequence number, the options field, the client ID, the phone number, and the number in the greeting. The least significant two bytes of the sum are kept. 
+The checksum is calculated by adding the base-10 integer value of the sequence number, the options field, the phone number, and the number in the greeting. The least significant two bytes of the sum are kept. 
 
 The packet has been designed such that the server can operate statelessly: unless add or remove is specified, the number will not be added or removed. However, the message will still go to the supplied number.
 
