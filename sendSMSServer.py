@@ -8,6 +8,8 @@ from objects import Packet
 _CONF_DICT = {}
 # the port on which to listen
 _CONF_DICT["port"] = 8658
+# the IP to which to bind
+_CONF_DICT["ip"] = "127.0.0.1"
 # the configuration file to read
 # most configuration files go in /etc on a Linux system
 _CONF_DICT["confFile"] = "smsServer.conf"
@@ -69,11 +71,14 @@ def parseArgs():
 
 # starts a server on PORT that listens for UDP packets
 def setupServer():	
-	server = ThreadingUDPServer(("127.0.0.1", _CONF_DICT["port"]), ThreadingUDPHandler)
-	server.serve_forever()
+	server = ThreadingUDPServer((_CONF_DICT["ip"], _CONF_DICT["port"]), ThreadingUDPHandler)
+	return server
 
 if __name__ == "__main__":
 	parseArgs()	
 	readConfiguration()
-	print "Starting SMS Server on port", _CONF_DICT["port"],"..."
-	setupServer()
+	server = setupServer()
+	try:
+		server.serve_forever()
+	except KeyboardInterrupt:
+		server.close()
