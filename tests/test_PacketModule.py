@@ -38,9 +38,14 @@ class TestPacketClass(TestPacketModule):
 		self.assertEqual(self.packet.options.bits, 0b00001111)
 		self.assertEqual(self.packet.seqNum, 1)
 	
-	def testDecryptPacket(self):
-	# tests decrypting a packet with zeroed options
-		pass
+	@unittest.expectedFailure
+	def test_parseClientPacket(self):
+	# tests the ability to decrypt a client packet
+		packet = ClientPacket()
+		packet.options.addClient = True
+		#print "\n",packet, packet.options.bits, "\n"
+		newPacket = Packet.parseBytes(packet.packedBytes)
+		self.assertIsInstance(newPacket, ClientPacket)
 
 class TestClientPacketClass(TestPacketModule):
 # test the client packet class
@@ -132,47 +137,81 @@ class TestNotifyPacketClass(TestPacketModule):
 
 class TestOptionsClass(TestPacketModule):
 # tests the Options class for correctness
-	def test_returnValueAddNumber(self):
-	# tests the return value of adding a number
+	def setUp(self):
+		self.options = Options()
+		self.options.bits = 0b00000000
+
+	def test_addNumber(self):
+	# tests the return value
+		self.options.addNumber = 1
 		self.assertEqual(self.options.addNumber, 1, "addNumber not equal to 1")
-	
-	def test_returnValueRemoveNumber(self):
-	# tests the return value of removing a number
+		self.assertEqual(self.options.bits, 0b00000001)
+		self.options.addNumber = 0
+		self.assertEqual(self.options.addNumber, 0)
+		self.assertEqual(self.options.bits, 0b00000000)
+
+	def test_removeNumber(self):
+	# tests the return value
+		self.options.removeNumber = 1
 		self.assertEqual(self.options.removeNumber, 1, "removeNumber not equal to 1")
+		self.assertEqual(self.options.bits, 0b00000010)
+		self.options.removeNumber = 0
+		self.assertEqual(self.options.removeNumber, 0)
+		self.assertEqual(self.options.bits, 0b00000000)
 
-	def test_returnValueSendSMS(self):
-	# tests the return value of sending an SMS 
+	def test_sendSMS(self):
+	# tests the return value
+		self.options.sendSMS = 1
 		self.assertEqual(self.options.sendSMS, 1, "sendSMS not equal to 1")
+		self.assertEqual(self.options.bits, 0b00000100)
+		self.options.sendSMS = 0
+		self.assertEqual(self.options.sendSMS, 0)
+		self.assertEqual(self.options.bits, 0b00000000)
 
-	def test_returnValueSendVoiceCall(self):
-	# tests the return value of sending a voice call
+	def test_sendVoiceCall(self):
+	# tests the return value
+		self.options.sendVoiceCall = 1
 		self.assertEqual(self.options.sendVoiceCall, 1, "sendVoiceCall not equal to 1")
+		self.assertEqual(self.options.bits, 0b00001000)
+		self.options.sendVoiceCall = 0
+		self.assertEqual(self.options.sendVoiceCall, 0)
+		self.assertEqual(self.options.bits, 0b00000000)
 
-	def test_returnValueAddClient(self):
-	# tests the return value of adding a client
-		self.assertEqual(self.options.addClient, 0, "addClient not equal to 0")
-		
-	def test_returnValueRemoveClient(self):
-	# tests the return value of removing a client
-		self.assertEqual(self.options.removeClient, 0, "sendVoiceCall not equal to 0")
+	def test_addClient(self):
+	# tests the return value
+		self.options.addClient = 1
+		self.assertEqual(self.options.addClient, 1, "addClient not equal to 1")
+		self.assertEqual(self.options.bits, 0b00010000)
+		self.options.addClient = 0
+		self.assertEqual(self.options.addClient, 0)
+		self.assertEqual(self.options.bits, 0b00000000)
 
-	def test_returnValueOption1(self):
-	# tests the return value of a developer option
-		self.assertEqual(self.options.option1, 0, "option1 not equal to 0")
+	def test_removeClient(self):
+	# tests the return value
+		self.options.removeClient = 1
+		self.assertEqual(self.options.removeClient, 1, "removeClient not equal to 1")
+		self.assertEqual(self.options.bits, 0b00100000)
+		self.options.removeClient = 0
+		self.assertEqual(self.options.removeClient, 0)
+		self.assertEqual(self.options.bits, 0b00000000)
 
-	def test_returnValueOption2(self):
-	# tests the return value of a developer option
-		self.assertEqual(self.options.option2, 0, "option2 not equal to 0")
+	def test_option1(self):
+	# tests the return value
+		self.options.option1 = 1
+		self.assertEqual(self.options.option1, 1, "option1 not equal to 1")
+		self.assertEqual(self.options.bits, 0b01000000)
+		self.options.option1 = 0
+		self.assertEqual(self.options.option1, 0)
+		self.assertEqual(self.options.bits, 0b00000000)
 
-	def test_returnValueBits(self):
-	# tests the return value of a developer option
-		self.assertEqual(self.options.bits, 0b00001111, "bits not equal to 0b00001111")
-	
-	def test_changeOptions(self):
-	# test to ensure that the bit pattern is updated properly when the options change
-		self.options.removeClient = True
-		self.assertEqual(self.options.removeClient, 1, "removeClient not updated properly")
-		self.assertEqual(self.options.bits, 0b00101111, "bit pattern not updated properly")
+	def test_option2(self):
+	# tests the return value
+		self.options.option2 = 1
+		self.assertEqual(self.options.option2, 1, "option2 not equal to 1")
+		self.assertEqual(self.options.bits, 0b10000000)
+		self.options.option2 = 0
+		self.assertEqual(self.options.option2, 0)
+		self.assertEqual(self.options.bits, 0b00000000)
 
 def suite():
 	return unittest.TestLoader().loadTestsFromTestCase(TestPacketModule)
