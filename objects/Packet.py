@@ -193,7 +193,7 @@ class Packet(object):
 	# decrypts a packet given the encrypted payload
 	# return:	returns a defined packet (with the appropriate child class)
 	#			with its values set to the decrypted results
-		pass
+		return Packet.parseBytes(encrData)
 
 # builds the class to handle client add or remove
 class ClientPacket(Packet):
@@ -245,7 +245,7 @@ class NumberPacket(Packet):
 	
 	def __repr__(self):
 	# returns a string representation of this object
-		return "{:02x}:{:1x}:{:0>4x}".format(self.seqNum, self.options.bits, self.number)
+		return "{:02x}:{:01x}:{:0>4x}".format(self.seqNum, self.options.bits, self.number)
 
 	@property
 	def packedBytes(self):
