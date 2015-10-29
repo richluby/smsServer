@@ -33,18 +33,34 @@ class ThreadingUDPServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
 		self.logger.info("Initializing server for %s.", serverAddress)
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		self.packetDict = OrderedDict()
+		self.connectedClients = set()
 		SocketServer.UDPServer.__init__(self, serverAddress, handler)
+	
+	def secretIsValid(self, secret):
+	# checks if the provided secret is valid
+	#TODO
+		return True
 
 	def handleNumberPacket(self, packet):
 		self.logger.info("NumberPacket: %s", packet)
 	
 	def handleNotifyPacket(self, packet):
 	# sends a notification to the given number
+	# this method will change depending on the vendor chosen
+	# for the SMS/Phone service
 		self.logger.info("NotifyPacket: %s", packet)
 	
-	def handleClientPacket(self, packet):
+	def handleClientPacket(self, packet, ipAddress):
 	# handles a client packet
+	# packet:		the packet that provides the client information
+	# ipAddress:	the (ip, port) of the client
 		self.logger.info("ClientPacket: %s", packet)
+		if (packet.options.addClient and self.secretIsValid(packet.serverSecret)):
+			self.connectedClients.add((packet.clientID, ipAddress))
+			self.logger.info("%d at %s connected.", packet.clientID, ipAddress[0])
+		elif (packet.options.removeClient and self.secretIsValid(packet.serverSecret)):
+			self.connectedClients.discard((packet.clientID, ipAddress))
+			self.logger.info("%d at %s disconnected.", packet.clientID, ipAddress[0])
 
 	def handlePacket(self, packet, clientAddress):
 	# handles parsing an individual packet
@@ -53,7 +69,7 @@ class ThreadingUDPServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
 		elif isinstance(packet, NotifyPacket):
 			self.handleNotifyPacket(packet)
 		elif isinstance(packet, ClientPacket):
-			self.handleClientPacket(packet)
+			self.handleClientPacket(packet, clientAddress[0])
 		if (packet.seqNum not in self.packetDict):
 			self.sock.sendto(packet.packedBytes, clientAddress) 
 	

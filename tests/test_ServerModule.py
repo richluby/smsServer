@@ -11,6 +11,8 @@ class ServerBaseClass(unittest.TestCase):
 	# creates a socket through which to send information
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		self.serverAddress = ("localhost", 8657)
+		self.clientID = 5643
+		self.address = ("127.0.0.1", 6785)
 		self.server = ThreadingUDPServer(self.serverAddress, ThreadingUDPHandler)
 		serverThread = threading.Thread(target=self.server.serve_forever)
 		serverThread.setDaemon(True)
@@ -24,6 +26,17 @@ class ServerBaseClass(unittest.TestCase):
 		
 class TestServerModule(ServerBaseClass):
 # tests the server Module
+	def test_clientPacketHandler(self):
+		packet = ClientPacket()
+		packet.options.addClient = True
+		packet.clientID = self.clientID
+		self.server.handleClientPacket(packet, self.address[0])
+		self.assertIn((packet.clientID, self.address[0]), self.server.connectedClients)
+		packet.options.addClient = False
+		packet.options.removeClient = True
+		self.server.handleClientPacket(packet, self.address[0])
+		self.assertNotIn((packet.clientID, self.address[0]), self.server.connectedClients)
+
 	def test_numberPacketReceiver(self):
 	# tests buidling the number packet
 		packet = NumberPacket()
@@ -36,6 +49,7 @@ class TestServerModule(ServerBaseClass):
 	def test_clientPacketReceiver(self):
 	# tests buidling the client packet
 		packet = ClientPacket()
+		packet.clientID = self.clientID
 		packet.options.addClient = True
 		self.sock.sendto(packet.packedBytes, self.serverAddress)
 		received = self.sock.recv(1024)
