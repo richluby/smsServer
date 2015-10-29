@@ -40,34 +40,40 @@ A client in this context is the interface to the restaurant employee. The client
 
 ### Adding or Removing a Client
 
-+---------+----------+------------------+---------------+
-|   SEQ   | Options  | Client ID        | Server Secret |
-+=========+==========+==================+===============+
-| 2 bytes | 0000XX-- | 4 bytes          | 64 bytes      |
-+---------+----------+------------------+---------------+
++---------+----------+------------+---------------+----------+
+|   SEQ   | Options  | Client ID  | Server Secret | Checksum |
++=========+==========+============+===============+==========+
+| 2 bytes | 0000XX-- | 4 bytes    | 64 bytes      | 2 bytes  |
++---------+----------+------------+---------------+----------+
 
 **XX** is the sequence to determine if this client is being added or removed. The ID will be interpreted as a whole number. The Secret will be a salted, one-time hash of a shared secret between the server and any authorized clients. The packet itself must be encrypted in the same scheme as any other packet. Bits 0-3 must be 0 to signal that a client operation is occurring.
 
+The checksum is calculated by adding the base-10 integer value of the sequence number, the options field, and the client ID. The least significant two bytes of the sum are kept.
+
 ### Adding or Removing a Phone Number
 
-+---------+---------+------------------+
-|   SEQ   | Options | Phone Number     |
-+=========+=========+==================+
-| 2 bytes | 1 byte  | 4 bytes          |
-+---------+---------+------------------+
++---------+---------+-----------------+----------+
+|   SEQ   | Options | Phone Number    | Checksum |
++=========+=========+=================+==========+
+| 2 bytes | 1 byte  | 4 bytes         | 2 bytes  |
++---------+---------+-----------------+----------+
 
 Sequence numbers can be defined in an implementation specific manner. No requirement exists for them to be monotonic nor deterministic. However, if the same number is used in short succession, then a packet may not be confirmed. When the server receives this packet, it will update each client using the same packet, albeit with a different sequence number.
 
+The checksum is calculated by adding the base-10 integer value of the sequence number, the options field, the client ID, and the phone number. The least significant two bytes of the sum are kept. 
+
 ### Sending an SMS
 
-+---------+---------+------------------+--------------------+----------+
-|   SEQ   | Options | Phone Number     | Number in Greeting | Greeting |
-+=========+=========+==================+====================+==========+
-| 2 bytes | 1 byte  | 4 bytes          | 2 bytes            | 64 bytes |
-+---------+---------+------------------+--------------------+----------+
++---------+---------+-----------------+--------------------+-----------+----------+
+|   SEQ   | Options | Phone Number    | Number in Greeting | Checksum  | Greeting |
++=========+=========+=================+====================+===========+==========+
+| 2 bytes | 1 byte  | 4 bytes         | 2 bytes            | 2 bytes   | 64 bytes |
++---------+---------+-----------------+--------------------+-----------+----------+
 
 This packet commands the server to send an SMS to the specified number. The greeting 
-provides a customization item (such as a name) for the specified number, as well as a number. The server has a standard greeting into which it places the two items. 
+provides a customization item (such as a name) for the specified number, as well as a number. The greeting does not have to fill the full 64 bytes. The server has a standard greeting into which it places the two items. 
+
+The checksum is calculated by adding the base-10 integer value of the sequence number, the options field, the client ID, the phone number, and the number in the greeting. The least significant two bytes of the sum are kept. 
 
 The packet has been designed such that the server can operate statelessly: unless add or remove is specified, the number will not be added or removed. However, the message will still go to the supplied number.
 
