@@ -38,14 +38,38 @@ class TestPacketClass(TestPacketModule):
 		self.assertEqual(self.packet.options.bits, 0b00001111)
 		self.assertEqual(self.packet.seqNum, 1)
 	
-	@unittest.expectedFailure
-	def test_parseClientPacket(self):
-	# tests the ability to decrypt a client packet
+	def test_clientPacketParsing(self):
+	# tests the ability to parse the packet 
 		packet = ClientPacket()
 		packet.options.addClient = True
-		#print "\n",packet, packet.options.bits, "\n"
 		newPacket = Packet.parseBytes(packet.packedBytes)
 		self.assertIsInstance(newPacket, ClientPacket)
+		packet.options.addClient = False
+		packet.options.removeClient = True
+		newPacket = Packet.parseBytes(packet.packedBytes)
+		self.assertIsInstance(newPacket, ClientPacket)
+
+	def test_numberPacketParsing(self):
+	# tests the ability to parse the packet 
+		packet = NumberPacket()
+		packet.options.addNumber = True
+		newPacket = Packet.parseBytes(packet.packedBytes)
+		self.assertIsInstance(newPacket, NumberPacket)
+		packet.options.addNumber = False
+		packet.options.removeNumber = True
+		newPacket = Packet.parseBytes(packet.packedBytes)
+		self.assertIsInstance(newPacket, NumberPacket)
+
+	def test_notifyPacketParsing(self):
+	# tests the ability to parse the packet 
+		packet = NotifyPacket()
+		packet.options.sendSMS = True
+		newPacket = Packet.parseBytes(packet.packedBytes)
+		self.assertIsInstance(newPacket, NotifyPacket)
+		packet.options.sendSMS = False
+		packet.options.sendVoiceCall = True
+		newPacket = Packet.parseBytes(packet.packedBytes)
+		self.assertIsInstance(newPacket, NotifyPacket)
 
 class TestClientPacketClass(TestPacketModule):
 # test the client packet class
@@ -64,7 +88,7 @@ class TestClientPacketClass(TestPacketModule):
 	def test_representation(self):
 	# tests the string return of the packet
 		string = str(self.packet)
-		self.assertEqual(string, "00:0:0000:\xff")
+		self.assertEqual(string, "00:0:0000:\x00")
 
 	def testUnpackingBytes(self):
 	#tests unpacking the bytes

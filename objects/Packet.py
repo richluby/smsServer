@@ -124,6 +124,10 @@ class Options(object):
 			for i in xrange(0, numOpts):
 				mask = 1 | mask << 1
 			self._bits = self._bits & (mask ^ (1 << _BITMAP["option2"]))
+	
+	def __repr__(self):
+	# returns the binary view of these options
+		return "{:08b}".format(self._bits)
 
 	@property
 	def bits(self):
@@ -166,6 +170,25 @@ class Packet(object):
 		return "{:02x}:{:1x}".format(self.seqNum, self.options.bits)
 
 	@staticmethod
+	def parseBytes(bits):
+	# parses the given bytes into a packet and returns the 
+	# fully formed packet
+	# returns: fully formed packet of the type determined by the options field
+		options = int(struct.unpack("!B", bits[2:3])[0])
+		if((options  & 0b01) == 1 or (options & 0b10 == 2)): # check if number packet
+			packet = NumberPacket()
+			packet.unpackBytes(bits)
+			return packet
+		elif((options >>2  & 0b01) == 1 or (options>>2 & 0b10 == 2)): # check if notify packet
+			packet = NotifyPacket()
+			packet.unpackBytes(bits)
+			return packet
+		elif((options >> 4) & 0b11 == 1 or ((options >> 4) & 0b11 == 2)): # check if client packet
+			packet = ClientPacket()
+			packet.unpackBytes(bits)
+			return packet
+
+	@staticmethod
 	def decryptPacket(encrData):
 	# decrypts a packet given the encrypted payload
 	# return:	returns a defined packet (with the appropriate child class)
@@ -186,7 +209,7 @@ class ClientPacket(Packet):
 	def __init__(self):
 		super(ClientPacket, self).__init__()
 		self.clientID = 0
-		self.serverSecret = "\xff"
+		self.serverSecret = "\x00"
 
 	def __repr__(self):
 	# returns a string representation of this object
