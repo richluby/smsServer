@@ -18,9 +18,12 @@ class ThreadingUDPHandler(SocketServer.BaseRequestHandler):
 	# handles incoming items
 	def handle(self):
 		data = self.request[0].strip()
-		packet = Packet.decryptPacket(data)
-		self.server.handlePacket(packet, self.client_address)
-		self.logger.debug("I saw %s from %s", packet, self.client_address[0])
+		try:
+			packet = Packet.decryptPacket(data)
+			self.server.handlePacket(packet, self.client_address)
+			self.logger.debug("I saw %s from %s", packet, self.client_address[0])
+		except ValueError:
+			self.logger.info("Invalid checksum from %s.", self.client_address[0])
 
 class ThreadingUDPServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer): 
 # serves the sms server

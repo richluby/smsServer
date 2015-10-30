@@ -136,6 +136,13 @@ class TestNumberPacketClass(TestPacketModule):
 		self.assertEqual(self.packet.number, 16)
 		self.assertEqual(self.packet.checksum, 32)
 
+	def test_invalidChecksum(self):
+	# tests when an invalid checksum is passed
+	# by using a simple number packet construct
+		packet = NumberPacket()
+		with self.assertRaises(ValueError):
+			packet.unpackBytes("\x00\x01"+"\x01"+"\x00\x00\x00\x00"+"\x10\x01")
+
 class TestNotifyPacketClass(TestPacketModule):
 # test the Packet class
 	def setUp(self):

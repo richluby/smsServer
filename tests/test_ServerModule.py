@@ -23,7 +23,7 @@ class ServerBaseClass(unittest.TestCase):
 	# closes the socket
 		self.sock.close()
 		self.server.close()
-		
+
 class TestServerModule(ServerBaseClass):
 # tests the server Module
 	def test_clientPacketHandler(self):
