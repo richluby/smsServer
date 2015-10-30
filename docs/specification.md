@@ -25,7 +25,7 @@ The data is encrypted over the network using a one-time password, and the number
 +-----+-----+-----------------------------+-----+--------------------------------+
 |  5  |  1  | Remove a client             |  0  | Do not remove a client         |
 +-----+-----+-----------------------------+-----+--------------------------------+
-|  6  |  1  | Developer specific          |  0  | Developer Specific             |
+|  6  |  1  | Packet is ACK packet        |  0  | Packet is not ACK packet       |
 +-----+-----+-----------------------------+-----+--------------------------------+
 |  7  |  1  | Developer Specific          |  0  | Developer specific             |
 +-----+-----+-----------------------------+-----+--------------------------------+

@@ -3,7 +3,7 @@
 import struct
 
 #contains the mapping of options to bit placement
-_BITMAP = {"addNumber":0, "removeNumber":1, "sendSMS": 2, "sendVoiceCall":3, "addClient":4, "removeClient":5, "option1":6, "option2":7}
+_BITMAP = {"addNumber":0, "removeNumber":1, "sendSMS": 2, "sendVoiceCall":3, "addClient":4, "removeClient":5, "isACK":6, "option":7}
 
 # this class handles the options field for each packet
 class Options(object):
@@ -98,32 +98,32 @@ class Options(object):
 			self._bits = self._bits & (mask ^ (1 << _BITMAP["removeClient"]))
 
 	@property
-	def option1(self):
-		return 1 & (self._bits >> _BITMAP["option1"])
-	@option1.setter
-	def option1(self, val):
+	def isACK(self):
+		return 1 & (self._bits >> _BITMAP["isACK"])
+	@isACK.setter
+	def isACK(self, val):
 		if (val):
-			self._bits = self._bits | (1 << _BITMAP["option1"])
+			self._bits = self._bits | (1 << _BITMAP["isACK"])
 		else:
 			mask = 0b0
 			numOpts = len(_BITMAP)
 			for i in xrange(0, numOpts):
 				mask = 1 | mask << 1
-			self._bits = self._bits & (mask ^ (1 << _BITMAP["option1"]))
+			self._bits = self._bits & (mask ^ (1 << _BITMAP["isACK"]))
 
 	@property
-	def option2(self):
-		return 1 & (self._bits >> _BITMAP["option2"])
-	@option2.setter
-	def option2(self, val):
+	def option(self):
+		return 1 & (self._bits >> _BITMAP["option"])
+	@option.setter
+	def option(self, val):
 		if (val):
-			self._bits = self._bits | (1 << _BITMAP["option2"])
+			self._bits = self._bits | (1 << _BITMAP["option"])
 		else:
 			mask = 0b0
 			numOpts = len(_BITMAP)
 			for i in xrange(0, numOpts):
 				mask = 1 | mask << 1
-			self._bits = self._bits & (mask ^ (1 << _BITMAP["option2"]))
+			self._bits = self._bits & (mask ^ (1 << _BITMAP["option"]))
 	
 	def __repr__(self):
 	# returns the binary view of these options
@@ -339,8 +339,8 @@ if __name__ == "__main__":
 	opt.sendVoiceCall = 0
 	opt.addClient = 1
 	opt.removeClient = 0
-	opt.option1 = 1
-	opt.option2 = 9
+	opt.isACK = 1
+	opt.option = 9
 	packet = Packet()
 	packet.options = opt
 	print "%s" % packet.toBytes

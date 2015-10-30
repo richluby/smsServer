@@ -45,6 +45,7 @@ class TestServerModule(ServerBaseClass):
 		received = self.sock.recv(1024)
 		packet = Packet.parseBytes(received)
 		self.assertIsInstance(packet, NumberPacket)
+		self.assertEqual(packet.options.isACK, True)
 
 	def test_clientPacketReceiver(self):
 	# tests buidling the client packet

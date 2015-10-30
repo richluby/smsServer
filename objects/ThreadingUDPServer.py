@@ -35,7 +35,6 @@ class ThreadingUDPServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
 		self.logger = logging.getLogger("Server")
 		self.logger.info("Initializing server for %s.", serverAddress)
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		self.packetDict = OrderedDict()
 		self.connectedClients = set()
 		SocketServer.UDPServer.__init__(self, serverAddress, handler)
 	
@@ -73,7 +72,8 @@ class ThreadingUDPServer(SocketServer.ThreadingMixIn, SocketServer.UDPServer):
 			self.handleNotifyPacket(packet)
 		elif isinstance(packet, ClientPacket):
 			self.handleClientPacket(packet, clientAddress[0])
-		if (packet.seqNum not in self.packetDict):
+		if (not packet.options.isACK):
+			packet.options.isACK = True
 			self.sock.sendto(packet.packedBytes, clientAddress) 
 	
 	def close(self):

@@ -236,22 +236,22 @@ class TestOptionsClass(TestPacketModule):
 		self.assertEqual(self.options.removeClient, 0)
 		self.assertEqual(self.options.bits, 0b00000000)
 
-	def test_option1(self):
+	def test_isACK(self):
 	# tests the return value
-		self.options.option1 = 1
-		self.assertEqual(self.options.option1, 1, "option1 not equal to 1")
+		self.options.isACK = 1
+		self.assertEqual(self.options.isACK, 1, "isACK not equal to 1")
 		self.assertEqual(self.options.bits, 0b01000000)
-		self.options.option1 = 0
-		self.assertEqual(self.options.option1, 0)
+		self.options.isACK = 0
+		self.assertEqual(self.options.isACK, 0)
 		self.assertEqual(self.options.bits, 0b00000000)
 
-	def test_option2(self):
+	def test_option(self):
 	# tests the return value
-		self.options.option2 = 1
-		self.assertEqual(self.options.option2, 1, "option2 not equal to 1")
+		self.options.option = 1
+		self.assertEqual(self.options.option, 1, "option not equal to 1")
 		self.assertEqual(self.options.bits, 0b10000000)
-		self.options.option2 = 0
-		self.assertEqual(self.options.option2, 0)
+		self.options.option = 0
+		self.assertEqual(self.options.option, 0)
 		self.assertEqual(self.options.bits, 0b00000000)
 
 def suite():
